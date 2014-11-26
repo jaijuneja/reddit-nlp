@@ -2,18 +2,17 @@ import praw
 from collections import Counter
 from time import time, sleep
 import urllib2
-import string
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
+import regex as re
 
 
 class RedditWordCounter(object):
-    user_agent = ('redditvocab/0.1 by TheRedfather')
+    user_agent = 'redditvocab/0.1 by TheRedfather'
 
-    def __init__(self, username, password):
+    def __init__(self):
         self.reddit = praw.Reddit(user_agent=self.user_agent)
-        self.reddit.login(username, password)
         self.stemmer = PorterStemmer()
 
     def subreddit_comments(self, subreddit_name, limit=1000):
@@ -70,7 +69,8 @@ class RedditWordCounter(object):
 
     def get_word_count(self, text, stop_words=True, stemming=True):
         text = text.lower()
-        punctuation_removed = text.translate(None, string.punctuation)
+        punctuation_removed = re.sub(ur"\p{P}+", "", text)
+        # punctuation_removed = text.translate(None, string.punctuation)
         tokens = nltk.word_tokenize(punctuation_removed)
 
         # Remove stop words
