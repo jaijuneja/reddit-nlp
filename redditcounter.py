@@ -5,7 +5,7 @@ import urllib2
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-import regex as re
+from string import punctuation
 
 
 class RedditWordCounter(object):
@@ -34,7 +34,8 @@ class RedditWordCounter(object):
                         comments_processed += 1
 
                         if comments_processed % 100 == 0:
-                            print '%i comments processed...' % comments_processed
+                            print "{0} comments processed for subreddit " \
+                                  "'{1}'...".format(comments_processed, subreddit_name)
 
                     except ValueError:
                         pass
@@ -42,7 +43,7 @@ class RedditWordCounter(object):
             if comments_processed >= limit:
                 break
 
-        print "Processed %i comments for subreddit '%s'" % (comments_processed, subreddit_name)
+        print "Processed {0} comments for subreddit '{1}'".format(comments_processed, subreddit_name)
         return vocabulary
 
     def subreddit_titles(self, subreddit_name, limit=1000):
@@ -59,17 +60,17 @@ class RedditWordCounter(object):
                 submissions_processed += 1
 
                 if submissions_processed % 100 == 0:
-                    print '%i titles processed...' % submissions_processed
+                    print "{0} titles processed for subreddit '{1}'".format(submissions_processed, subreddit_name)
 
             except ValueError:
                 pass
 
-        print "Processed %i titles for subreddit '%s'" % (submissions_processed, subreddit_name)
+        print "Processed {0} titles for subreddit {1}".format(submissions_processed, subreddit_name)
         return vocabulary
 
     def get_word_count(self, text, stop_words=True, stemming=True):
         text = text.lower()
-        punctuation_removed = re.sub(ur"\p{P}+", "", text)
+        punctuation_removed = self.remove_punctuation(text)
         # punctuation_removed = text.translate(None, string.punctuation)
         tokens = nltk.word_tokenize(punctuation_removed)
 
@@ -81,6 +82,16 @@ class RedditWordCounter(object):
             tokens = self.stem_tokens(tokens)
 
         return Counter(tokens)
+
+    @staticmethod
+    def remove_punctuation(text, replacement='', exclude="-"):
+        """Remove punctuation from an input string """
+        text = text.replace('-', ' ')  # Always replace hyphen with space
+        for p in set(list(punctuation)) - set(list(exclude)):
+            text = text.replace(p, replacement)
+
+        text = ' '.join(text.split())  # Remove excess whitespace
+        return text
 
     @staticmethod
     def remove_stopwords(tokens, language='english'):

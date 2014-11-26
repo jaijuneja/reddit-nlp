@@ -1,9 +1,11 @@
+from __future__ import division
 from collections import Counter
 import json
 import os
 import math
 import errno
 import operator
+import numpy as np
 
 
 class TfidfCorpus(object):
@@ -17,9 +19,14 @@ class TfidfCorpus(object):
     """
 
     def __init__(self, corpus_path='tfidf_corpus'):
-        corpus_path = corpus_path + 'corpus.json' if corpus_path.endswith('/') else corpus_path
+
+        # Format the corpus_path as a valid JSON file
+        path_leaf = os.path.basename(corpus_path)
+        if '.' not in path_leaf:
+            corpus_path = os.path.join(corpus_path, 'corpus.json')
         corpus_path = corpus_path + '.json' if not corpus_path.endswith('.json') else corpus_path
         make_path(corpus_path)
+
         self.corpus_path = corpus_path
 
         self.num_docs = 0
@@ -58,6 +65,9 @@ class TfidfCorpus(object):
             print 'Provided file does not have expected structure'
             raise err
 
+    def get_document_list(self):
+        return self.document_list
+
     def add_document(self, document, document_name):
         """
         Load a document into the corpus.
@@ -78,13 +88,15 @@ class TfidfCorpus(object):
                 else:
                     print 'Could not interpret response. Try again.'
 
-        self.document_list.append(document_name)
-
         for term, freq in document.iteritems():
             if not self.corpus.get(term, False):
                 self.corpus[term] = Counter()
 
             self.corpus[term][document_name] = freq
+
+        self.document_list.append(document_name)
+        self.num_docs = len(self.document_list)
+        self.document_lengths[document_name] = sum(document.values())
 
     def get_document(self, document_name):
         if document_name not in self.document_list:
@@ -98,6 +110,8 @@ class TfidfCorpus(object):
             return
         [freqs.pop(document_name) for term, freqs in self.corpus.iteritems() if freqs.get(document_name, 0)]
         self.document_list.remove(document_name)
+        self.document_lengths.pop(document_name)
+        self.num_docs = len(self.document_list)
 
     def get_idf(self, term):
         num_documents = len(self.document_list)
@@ -109,15 +123,22 @@ class TfidfCorpus(object):
         idf = self.get_idf(term)
         return tf * idf
 
-    def get_document_tfidfs(self, document_name):
-        return Counter({
+    def get_document_tfidfs(self, document_name, l2_norm=True):
+        tfidfs = {
             term: self.get_tfidf(term, document_name) for term, freq in self.corpus.iteritems()
             if freq.get(document_name, '')
-        })
+        }
+
+        if l2_norm:
+            normalization = np.linalg.norm(tfidfs.values(), axis=1)
+            for key, value in tfidfs.items():
+                tfidfs[key] = value / normalization
+
+        return tfidfs
 
     def get_top_terms(self, document_name, num_terms=30):
         tfidfs = self.get_document_tfidfs(document_name)
-        sorted_tfidfs = sorted(tfidfs.items(), key=operator.itemgetter(1))
+        sorted_tfidfs = sorted(tfidfs.items(), key=operator.itemgetter(1), reverse=True)
         return Counter(sorted_tfidfs[:num_terms])
 
 
