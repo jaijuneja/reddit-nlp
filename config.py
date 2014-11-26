@@ -1,9 +1,11 @@
 SAVE_DIR = 'tfidf_corpus'
 COMMENTS_PER_SUBREDDIT = 10000
+
+# List of top subreddits by subcriber count
 SUBREDDITS = [
-    # 'funny',
-    # 'pics',
-    # 'AskReddit',
+    'funny',
+    'pics',
+    'AskReddit',
     'todayilearned',
     'worldnews',
     'science',

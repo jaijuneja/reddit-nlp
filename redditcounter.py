@@ -3,7 +3,6 @@ from collections import Counter
 from time import time, sleep
 import urllib2
 import nltk
-from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from string import punctuation
 
@@ -11,9 +10,13 @@ from string import punctuation
 class RedditWordCounter(object):
     user_agent = 'redditvocab/0.1 by TheRedfather'
 
-    def __init__(self):
+    def __init__(self, stopwords='words/stopwords_english.txt'):
         self.reddit = praw.Reddit(user_agent=self.user_agent)
         self.stemmer = PorterStemmer()
+
+        # Load stop-words
+        with open(stopwords, 'rb') as stopwords_file:
+            self.stopwords = [word.strip('\n') for word in stopwords_file.readlines()]
 
     def subreddit_comments(self, subreddit_name, limit=1000):
 
@@ -71,7 +74,6 @@ class RedditWordCounter(object):
     def get_word_count(self, text, stop_words=True, stemming=True):
         text = text.lower()
         punctuation_removed = self.remove_punctuation(text)
-        # punctuation_removed = text.translate(None, string.punctuation)
         tokens = nltk.word_tokenize(punctuation_removed)
 
         # Remove stop words
@@ -93,9 +95,8 @@ class RedditWordCounter(object):
         text = ' '.join(text.split())  # Remove excess whitespace
         return text
 
-    @staticmethod
-    def remove_stopwords(tokens, language='english'):
-        return [word for word in tokens if word not in stopwords.words(language)]
+    def remove_stopwords(self, tokens):
+        return [word for word in tokens if word not in self.stopwords]
 
     def stem_tokens(self, tokens):
         return [self.stemmer.stem(word) for word in tokens]
