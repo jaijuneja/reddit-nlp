@@ -2,3 +2,4 @@
 .DS_Store
 tfidf_corpus/
 *.pyc
+build/
