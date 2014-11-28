@@ -5,22 +5,46 @@ import urllib2
 import nltk
 from nltk.stem.porter import PorterStemmer
 from string import punctuation
+from praw.handlers import MultiprocessHandler
 
 
 class RedditWordCounter(object):
-    user_agent = 'redditvocab/0.1 by TheRedfather'
 
-    def __init__(self, stopwords='words/stopwords_english.txt'):
-        self.reddit = praw.Reddit(user_agent=self.user_agent)
+    def __init__(self, user, stopwords='words/stopwords_english.txt', multiprocess=False):
+        handler = MultiprocessHandler() if multiprocess else None
+        self.user_agent = 'redditvocab/0.1 bot by {0}'.format(user)
+        self.reddit = praw.Reddit(user_agent=self.user_agent, handler=handler)
         self.stemmer = PorterStemmer()
 
         # Load stop-words
         with open(stopwords, 'rb') as stopwords_file:
             self.stopwords = [word.strip('\n') for word in stopwords_file.readlines()]
 
-    def subreddit_comments(self, subreddit_name, limit=1000):
+    def subreddit_comments(self, subreddit_name, limit=1000, stemming=False, get_all_comments=False):
+
+        def get_vocabulary(comments):
+
+            vocab = Counter()
+            num_comments = 0
+            for comment in comments:
+                if isinstance(comment, praw.objects.Comment):
+                    try:
+                        # Get the word counts for the comment
+                        vocab += self.get_word_count(comment.body, stemming=stemming)
+                        num_comments += 1
+
+                    except ValueError:
+                        pass
+                elif isinstance(comment, praw.objects.MoreComments) and get_all_comments:
+                    new_vocab, num_new_comments = get_vocabulary(comment.comments)
+                    vocab += new_vocab
+                    num_comments += num_new_comments
+
+            return vocab, num_comments
 
         subreddit = self.reddit.get_subreddit(subreddit_name)
+        print "Comments processed for subreddit '{}': 0".format(subreddit_name),
+
         # Initialise loop variables
         vocabulary = Counter()
         comments_processed = 0
@@ -29,29 +53,23 @@ class RedditWordCounter(object):
             comments = praw.helpers.flatten_tree(submission.comments)
 
             # Run over all comments
-            for comment in comments:
-                if isinstance(comment, praw.objects.Comment):
-                    try:
-                        # Get the word counts for the comment
-                        vocabulary += self.get_word_count(comment.body)
-                        comments_processed += 1
+            submission_vocab, num_new_comments = get_vocabulary(comments)
+            vocabulary += submission_vocab
+            comments_processed += num_new_comments
 
-                        if comments_processed % 100 == 0:
-                            print "{0} comments processed for subreddit " \
-                                  "'{1}'...".format(comments_processed, subreddit_name)
+            print "{}...".format(comments_processed),
 
-                    except ValueError:
-                        pass
-
-            if comments_processed >= limit:
+            if limit and comments_processed >= limit:
                 break
 
-        print "Processed {0} comments for subreddit '{1}'".format(comments_processed, subreddit_name)
+        print "{}. Finished!".format(comments_processed)
         return vocabulary
 
-    def subreddit_titles(self, subreddit_name, limit=1000):
+    def subreddit_titles(self, subreddit_name, limit=1000, stemming=False):
 
         subreddit = self.reddit.get_subreddit(subreddit_name)
+        print "Titles processed for subreddit {}: 0".format(subreddit_name),
+
         # Initialise loop variables
         vocabulary = Counter()
         submissions_processed = 0
@@ -59,19 +77,40 @@ class RedditWordCounter(object):
         for submission in subreddit.get_hot(limit=limit):
             try:
                 # Update the word counter to include the comment
-                vocabulary += self.get_word_count(submission.title)
+                vocabulary += self.get_word_count(submission.title, stemming=stemming)
                 submissions_processed += 1
 
                 if submissions_processed % 100 == 0:
-                    print "{0} titles processed for subreddit '{1}'".format(submissions_processed, subreddit_name)
+                    print "{}...".format(submissions_processed),
 
             except ValueError:
                 pass
 
-        print "Processed {0} titles for subreddit {1}".format(submissions_processed, subreddit_name)
+        print "{}. Finished!".format(submissions_processed)
         return vocabulary
 
-    def get_word_count(self, text, stop_words=True, stemming=True):
+    def user_comments(self, username, limit=1000, stemming=False):
+        user = self.reddit.get_redditor(username)
+
+        vocabulary = Counter()
+        comments_processed = 0
+        for comment in user.get_comments(limit=limit):
+            try:
+                # Get the word counts for the comment
+                vocabulary += self.get_word_count(comment.body, stemming=stemming)
+                comments_processed += 1
+
+                if comments_processed % 100 == 0:
+                    print "{0} comments processed for user " \
+                          "'{1}'...".format(comments_processed, username)
+
+            except ValueError:
+                pass
+
+        print "Processed {0} comments for user {1}".format(comments_processed, username)
+        return vocabulary
+
+    def get_word_count(self, text, stop_words=True, stemming=False):
         text = text.lower()
         punctuation_removed = self.remove_punctuation(text)
         tokens = nltk.word_tokenize(punctuation_removed)
@@ -86,9 +125,8 @@ class RedditWordCounter(object):
         return Counter(tokens)
 
     @staticmethod
-    def remove_punctuation(text, replacement='', exclude="-"):
+    def remove_punctuation(text, replacement=' ', exclude=""):
         """Remove punctuation from an input string """
-        text = text.replace('-', ' ')  # Always replace hyphen with space
         for p in set(list(punctuation)) - set(list(exclude)):
             text = text.replace(p, replacement)
 
@@ -101,13 +139,13 @@ class RedditWordCounter(object):
     def stem_tokens(self, tokens):
         return [self.stemmer.stem(word) for word in tokens]
 
-    @staticmethod
-    def check_connection(timeout=10):
+    def check_connection(self, timeout=10):
         """Wait for a server response."""
+        header = {'User-Agent': self.user_agent}
         start = time()
         while True:
             try:
-                request = urllib2.Request("http://www.reddit.com/")
+                request = urllib2.Request("http://www.reddit.com/", headers=header)
                 response = urllib2.urlopen(request)
                 response.read()
                 sleep(2)  # Adhere to Reddit API rule of 30 requests per minute

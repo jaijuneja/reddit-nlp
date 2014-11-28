@@ -1,7 +1,6 @@
+USERNAME = 'your_username'  # Change this to your username
 SAVE_DIR = 'tfidf_corpus'
-COMMENTS_PER_SUBREDDIT = 10000
-
-# List of top subreddits by subcriber count
+COMMENTS_PER_SUBREDDIT = 1000
 SUBREDDITS = [
     'funny',
     'pics',
