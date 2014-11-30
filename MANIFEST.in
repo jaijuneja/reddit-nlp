@@ -1,0 +1,4 @@
+include README.md
+include ez_setup.py
+include example.py
+recursive-include redditnlp/words *

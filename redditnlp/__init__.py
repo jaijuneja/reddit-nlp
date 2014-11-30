@@ -19,6 +19,30 @@ from praw.handlers import MultiprocessHandler
 
 
 class RedditWordCounter(object):
+    """Performs word counting of comments and titles in Reddit using the Reddit API.
+
+    To initialise a new RedditWordCounter instance:
+    >>> counter = RedditWordCounter('your_username')
+
+    To adhere to the Reddit API rules, please provide your Reddit username in place of 'your_username' above.
+    This will ensure that the app doesn't get banned from Reddit!
+
+    Data Attributes:
+        user_agent (str): required to connect to Reddit
+        reddit: instance of the Reddit API connection
+        stemmer: Porter stemmer used optionally to perform stemming of extracted words
+        stopwords (list): list of stop words used to reject common words such as 'and'
+
+    Methods:
+        subreddit_comments: word count from comments of a given subreddit
+        subreddit_titles: word count from titles of a given subreddit
+        user_comments: word count from comments of a given user
+        get_word_count: return tokenized word counts given an input string
+        remove_punctuation
+        remove_stopwords
+        stem_tokens: perform Porter stemming on a list of words
+        check_connection: check that there is a working connection to Reddit
+    """
 
     def __init__(
             self,
@@ -40,7 +64,7 @@ class RedditWordCounter(object):
         """Retrieve the vocabulary from the comments of a subreddit.
 
         :param subreddit_name: name of the subreddit excluding '/r/'
-        :param limit: number of comments to retrieve (1000 by default)
+        :param limit: number of comments to retrieve (1000 by default) - note that at present the limit is approximate
         :param stemming: if True, performs stemming on tokenized words (False by default)
         :param get_all_comments: if True, retrieves all comments per submission. Note that this requires descending the
         comment tree, which drastically increases the number of API calls and reduces performance due to rate-limiting.
@@ -110,7 +134,7 @@ class RedditWordCounter(object):
                 vocabulary += self.get_word_count(submission.title, stemming=stemming)
                 submissions_processed += 1
 
-                if submissions_processed % 100 == 0:
+                if submissions_processed % 100 == 0 or submissions_processed >= limit:
                     print("Titles processed for subreddit '{0}': {1}".format(subreddit_name, submissions_processed),
                           end="\r")
 
@@ -138,7 +162,7 @@ class RedditWordCounter(object):
                 vocabulary += self.get_word_count(comment.body, stemming=stemming)
                 comments_processed += 1
 
-                if comments_processed % 100 == 0:
+                if comments_processed % 100 == 0 or comments_processed >= limit:
                     print("Comments processed for user '{0}': {1}".format(username, comments_processed), end="\r")
 
             except ValueError:
@@ -198,8 +222,8 @@ class RedditWordCounter(object):
 
 
 class TfidfCorpus(object):
-    """Managing feature datasets in an inverted index. Useful for NLP and machine learning applications.
-    Corpus takes form:
+    """Stores features (e.g. words) and their document frequencies in an inverted index. Useful for NLP and machine
+    learning applications.
 
     To initialise a new TfidfCorpus instance:
     >>> corpus = TfidfCorpus()
@@ -434,6 +458,7 @@ class TfidfCorpus(object):
         return vectorizer
 
     def count_words_from_list(self, document_name, word_list, normalize=True):
+        """Given a list of input words, return the counts of these words in a specified document."""
         document = self.get_document(document_name)
         word_counts = [document[word] for word in word_list]
         total_count = sum(word_counts)
@@ -443,6 +468,7 @@ class TfidfCorpus(object):
         return total_count
 
     def get_mean_word_length(self, document_name, upper_limit=12):
+        """Get the average word length for all words in a given document."""
         document = self.get_document(document_name)
         return sum([len(term) * freq for term, freq in document.iteritems()
                     if len(term) <= upper_limit]) / sum(document.itervalues())

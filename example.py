@@ -4,8 +4,8 @@ import os
 from collections import deque
 
 USERNAME = 'your_username'  # Change this to your username
-SAVE_DIR = 'tfidf_corpus'
-COMMENTS_PER_SUBREDDIT = 1000
+SAVE_DIR = 'tfidf_corpus1'
+COMMENTS_PER_SUBREDDIT = 300
 SUBREDDITS = [
     'funny', 'pics', 'AskReddit', 'todayilearned', 'worldnews',
     'science', 'blog', 'IAmA', 'videos', 'gaming',
@@ -74,16 +74,16 @@ def get_vocabulary_sophistication(corpus):
 
 comment_corpus, corpus_path = get_subreddit_vocabularies()
 print 'TF-IDF corpus saved to %s' % corpus_path
-#
-# top_terms_path = save_subreddit_top_terms(comment_corpus)
-# print 'Top terms saved to %s' % corpus_path
 
-# swearword_frequency = get_swearword_counts(comment_corpus)
-# print 'Normalized swearword frequency:'
-# for subreddit, frequency in swearword_frequency.items():
-#     print '%s, %s' % (subreddit, frequency)
-#
-# print '\nAverage word length by subreddit:'
-# word_lengths = get_vocabulary_sophistication(comment_corpus)
-# for subreddit, frequency in word_lengths.items():
-#     print '%s, %s' % (subreddit, frequency)
+top_terms_path = save_subreddit_top_terms(comment_corpus)
+print 'Top terms saved to %s' % corpus_path
+
+swearword_frequency = get_swearword_counts(comment_corpus)
+print 'Normalized swearword frequency:'
+for subreddit, frequency in swearword_frequency.items():
+    print '%s, %s' % (subreddit, frequency)
+
+print '\nAverage word length by subreddit:'
+word_lengths = get_vocabulary_sophistication(comment_corpus)
+for subreddit, frequency in word_lengths.items():
+    print '%s, %s' % (subreddit, frequency)

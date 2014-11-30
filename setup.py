@@ -1,8 +1,11 @@
-import os
+import ez_setup
+ez_setup.use_setuptools(version='7.0')
+
 from setuptools import setup
+import os
 
 PACKAGE_NAME = 'redditnlp'
-VERSION = '0.11'
+VERSION = '0.1.1'
 
 
 def read(fname):
@@ -40,7 +43,8 @@ setup(
         'numpy>=1.8.0',
         'scikit-learn>=0.15.2',
     ],
+    include_package_data=True,
     package_data={PACKAGE_NAME: ['words/*.txt'],
-                  '': ['README.md']},
+                  '': ['README.md', 'ez_setup.py', 'example.py']},
     test_suite='tests'
 )

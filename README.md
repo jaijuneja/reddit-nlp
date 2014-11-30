@@ -2,6 +2,16 @@
 
 A lightweight Python module that performs tokenization and processing of text on Reddit. It allows you to analyze users, titles, comments and subreddits to understand their vocabulary. The module comes packaged with its own inverted index builder for storing vocabularies and word frequencies, such that it can generate large corpora of tf-idf weighted words. This means that you don't have to worry about storing and reading word counts if you're running scripts over long periods.
 
+## License
+
+Copyright 2014 Jai Juneja.
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see [http://www.gnu.org/licenses/](http://www.gnu.org/licenses/).
+
 ## Installation
 
 ### Using pip or easy_install
@@ -33,7 +43,7 @@ python setup.py install
 
 ### Usage:
 
-A more complex sample program using the redditnlp module can be found at `https://github.com/jaijuneja/reddit-nlp/blob/master/example.py`. Here we outline a basic word counter.
+A more complex sample program using the redditnlp module can be found at `https://github.com/jaijuneja/reddit-nlp/blob/master/example.py`. Here we outline a basic word counter application.
 
 The module consists of two classes: a Reddit word counter and a tf-idf corpus builder. These can be instantiated as follows:
 
@@ -45,6 +55,13 @@ corpus = TfidfCorpus()
 ```
 
 To adhere to the Reddit API rules, it is asked that you use your actual Reddit username in place of `'your_username'` above.
+
+For further information on the attributes and methods of these two classes you can run:
+
+```python
+help(RedditWordCounter)
+help(TfidfCorpus)
+```
 
 Next, we can tokenize 1000 comments from a selection of subreddits, extract the most common words and save all of our data to disk:
 
@@ -65,3 +82,7 @@ for subreddit in corpus.get_document_list():
     with open('top_words.txt', 'ab') as f:
         f.write(document + '\n' + '\n'.join(top_words.keys()))
 ```
+
+## Contact
+
+If you have any questions or have encountered an error, feel free to contact me at `jai -dot- juneja -at- gmail -dot- com`.
