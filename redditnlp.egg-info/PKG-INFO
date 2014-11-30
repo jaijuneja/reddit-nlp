@@ -1,15 +1,48 @@
 Metadata-Version: 1.1
 Name: redditnlp
-Version: 0.1
+Version: 0.11
 Summary: A tool to perform natural language processing of reddit content.
 Home-page: https://github.com/jaijuneja/reddit-nlp
 Author: Jai Juneja
 Author-email: jai.juneja@gmail.com
 License: BSD
-Description: # Reddit Word Counter
+Description: # Reddit NLP Package
         
-        Ranks the most common words used in different subreddits and stores the results in JSON files.
-Keywords: reddit language processing machine learning
+        Performs tokenization and processing of text on Reddit. Allows you to analyze users, titles, comments and subreddits to understand their vocabulary.
+        
+        ## Installation
+        
+        ### Using pip
+        
+        You can download the latest release version using pip:
+        
+        ```
+        pip install redditnlp
+        ```
+        
+        ### Latest development version
+        You can alternatively download the latest development version directly from GitHub:
+        
+        ```
+        git clone https://github.com/jaijuneja/reddit-nlp.git
+        ```
+        
+        Change into the root directory:
+        
+        ```
+        cd reddit-nlp
+        ```
+        
+        Then install the package:
+        
+        ```
+        python setup.py install
+        ```
+        
+        ### Example usage:
+        
+        An example program using the redditnlp module can be found at `https://github.com/jaijuneja/reddit-nlp/blob/master/example.py`.
+Keywords: reddit,natural language processing,machine learning
 Platform: UNKNOWN
 Classifier: Development Status :: 3 - Alpha
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence

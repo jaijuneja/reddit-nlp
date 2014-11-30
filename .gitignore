@@ -1,5 +1,7 @@
-.idea/
 .DS_Store
-tfidf_corpus/
 *.pyc
+.idea/
+tfidf_corpus/
 build/
+dist/
+redditnlp.egg-info/

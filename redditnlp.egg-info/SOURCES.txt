@@ -1,7 +1,6 @@
+README.txt
 setup.py
 redditnlp/__init__.py
-redditnlp/tfidf.py
-redditnlp/wordcount.py
 redditnlp.egg-info/PKG-INFO
 redditnlp.egg-info/SOURCES.txt
 redditnlp.egg-info/dependency_links.txt
