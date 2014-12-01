@@ -99,10 +99,10 @@ for subreddit in corpus.get_document_list():
 
 `redditnlp` now supports some of scikit-learn's machine learning capability. Several in-built functions enable the user to:
 
-* Convert a TfidfCorpus object into scipy sparse feature matrices
-* Train a classifier using the documents contained in a TfidfCorpus and thereafter classify new documents
+* Convert a TfidfCorpus object into a scipy sparse feature matrix (using `build_feature_matrix()`)
+* Train a classifier using the documents contained in a TfidfCorpus (with `train_classifier()`) and thereafter classify new documents (with `classify_document()`)
 
-Below is an example of a simple machine learning application that loads a corpus of subreddit comment data, uses it to train a classifier and determines which subreddit a user's comments match most closely:
+Below is an example of a simple machine learning application that loads a corpus of subreddit comment data, uses it to train a classifier and determines which subreddit a user's comments most closely match:
 
 ```python
 # Load the corpus of subreddit comment data and use it to train a classifier
