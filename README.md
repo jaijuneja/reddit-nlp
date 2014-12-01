@@ -1,4 +1,4 @@
-# Reddit NLP Package
+# Reddit NLP Package [![Build Status](https://travis-ci.org/jaijuneja/reddit-nlp.svg?branch=master)](https://travis-ci.org/jaijuneja/reddit-nlp)
 
 A lightweight Python module that performs tokenization and processing of text on Reddit. It allows you to analyze users, titles, comments and subreddits to understand their vocabulary. The module comes packaged with its own inverted index builder for storing vocabularies and word frequencies, such that it can generate large corpora of tf-idf weighted words. This means that you don't have to worry about storing and reading word counts if you're running scripts over long periods.
 
