@@ -1,5 +1,5 @@
 import ez_setup
-ez_setup.use_setuptools()
+ez_setup.use_setuptools(version='5.4.2')
 
 from setuptools import setup
 import os
