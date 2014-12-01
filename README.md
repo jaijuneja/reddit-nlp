@@ -53,7 +53,7 @@ This is appearing because you have a very outdated version of the setuptools pac
 
 If the above command doesn't do anything then it is likely that your version of setuptools was installed using a package manager such yum, apt or pip. Check your package manager for a package called python-setuptools or try `pip install setuptools --upgrade` and then re-run the install.
 
-## Usage:
+## Usage
 
 A more complex sample program using the redditnlp module can be found at `https://github.com/jaijuneja/reddit-nlp/blob/master/example.py`. Here we outline a basic word counter application.
 

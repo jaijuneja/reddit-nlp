@@ -16,6 +16,11 @@ from collections import Counter, OrderedDict
 from time import time, sleep
 from string import punctuation
 from praw.handlers import MultiprocessHandler
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from sklearn.multiclass import OneVsRestClassifier
 
 
 class RedditWordCounter(object):
@@ -286,6 +291,12 @@ class TfidfCorpus(object):
         self.document_lengths = dict()
         self.corpus = dict()
 
+        # Initialise scikit-learn attributes
+        self.vectorizer = None
+        self.tfidf_transformer = None
+        self.feature_matrix = None
+        self.classifier = None
+
         if os.path.isfile(corpus_path):
             self.load()
 
@@ -446,23 +457,59 @@ class TfidfCorpus(object):
         sorted_tfidfs = sorted(tfidfs.items(), key=operator.itemgetter(1), reverse=True)
         return OrderedDict(sorted_tfidfs[:num_terms])
 
-    def build_vectorizer(self, tfidf=True):
+    def build_feature_matrix(self, tfidf=True):
         """Transforms the corpus into a scikit-learn vectorizer object which can be used for machine learning.
+        Used to set the object attributes self.vectorizer and self.feature_matrix.
 
-        :param tfidf: if True, applies TfidfTransformer to vectorized features
-        :return: scikit-learn vectorizer
+        :param tfidf (bool): if True, applies TfidfTransformer to vectorized features
+        :return: scikit-learn vectorizer, scipy sparse feature matrix and its corresponding document labels
         """
-        from sklearn.feature_extraction import DictVectorizer
-        from sklearn.feature_extraction.text import TfidfTransformer
 
-        index = [self.get_document(document) for document in self.document_list]
+        train_data = [self.get_document(document) for document in self.document_list]
+        labels = self.document_list
         vectorizer = DictVectorizer()
-        vectorizer.fit_transform(index)
+        feature_matrix = vectorizer.fit_transform(train_data)
 
+        self.tfidf_transformer = None
         if tfidf:
-            vectorizer = TfidfTransformer().fit_transform(vectorizer)
+            self.tfidf_transformer = TfidfTransformer()
+            feature_matrix = self.tfidf_transformer.fit_transform(feature_matrix)
 
-        return vectorizer
+        self.vectorizer = vectorizer
+        self.feature_matrix = feature_matrix
+        return feature_matrix, labels, vectorizer
+
+    def train_classifier(self, classifier_type='LinearSVC', tfidf=True):
+        """Trains a document classifier using the vocabulary and documents contained in the corpus. Uses scikit-learn.
+
+        :param classifier_type (str): 'LinearSVC' or 'MultinomialNB' (LinearSVC by default)
+        :param tfidf (bool): if True, applies TfidfTransformer to vectorized features
+        :return: classifier object
+        """
+        self.build_feature_matrix(tfidf=tfidf)
+
+        if classifier_type.lower() == 'linearsvc':
+            classifier = OneVsRestClassifier(LinearSVC(random_state=0))
+        elif classifier_type.lower() == 'multinomialnb':
+            classifier = OneVsRestClassifier(MultinomialNB())
+        else:
+            raise Exception("Parameter classifier_type only accepts 'MultinomialNB', 'BernoulliNB' or 'LinearSVC'.")
+
+        classifier.fit(self.feature_matrix, self.document_list)
+        self.classifier = classifier
+        return classifier
+
+    def classify_document(self, document):
+        """Classifies an input document using a bag-of-words approach with sparse features.
+
+        :param document (dict): dict or Counter of the form {'word1': freq1, 'word2': freq2, ...}
+        :return (str): label corresponding to the document's classification
+        """
+        test_data = self.vectorizer.transform([document])
+        if self.tfidf_transformer:
+            test_data = self.tfidf_transformer.transform(test_data)
+
+        return self.classifier.predict(test_data)
 
     def count_words_from_list(self, document_name, word_list, normalize=True):
         """Given a list of input words, return the counts of these words in a specified document."""

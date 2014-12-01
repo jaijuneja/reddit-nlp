@@ -3,9 +3,14 @@ import requests
 import os
 from collections import deque
 
+######################
+# SETTINGS (EDIT THIS)
+######################
+
 USERNAME = 'your_username'  # Change this to your username
-SAVE_DIR = 'tfidf_corpus1'
-COMMENTS_PER_SUBREDDIT = 300
+SAVE_DIR = 'tfidf_corpus'
+CORPUS_FILE = 'corpus.json'
+COMMENTS_PER_SUBREDDIT = 1000
 SUBREDDITS = [
     'funny', 'pics', 'AskReddit', 'todayilearned', 'worldnews',
     'science', 'blog', 'IAmA', 'videos', 'gaming',
@@ -14,13 +19,17 @@ SUBREDDITS = [
     'explainlikeimfive', 'EarthPorn', 'books', 'television', 'politics'
 ]
 
+###########################
+# VOCABULARY ANALYTICS DEMO
+###########################
+
 
 def get_subreddit_vocabularies():
     # Initialise Reddit word counter instance
     reddit_counter = RedditWordCounter(USERNAME)
 
     # Initialise tf-idf corpus instance
-    corpus_path = os.path.join(SAVE_DIR, 'corpus.json')
+    corpus_path = os.path.join(SAVE_DIR, CORPUS_FILE)
     comment_corpus = TfidfCorpus(corpus_path)
 
     # Extract the vocabulary for each of the subreddits specified
@@ -72,18 +81,34 @@ def get_vocabulary_sophistication(corpus):
         mean_word_lengths[document] = corpus.get_mean_word_length(document)
     return mean_word_lengths
 
-comment_corpus, corpus_path = get_subreddit_vocabularies()
+# Extract their word counts
+corpus, corpus_path = get_subreddit_vocabularies()
 print 'TF-IDF corpus saved to %s' % corpus_path
 
-top_terms_path = save_subreddit_top_terms(comment_corpus)
+# Get the top words by subreddit
+top_terms_path = save_subreddit_top_terms(corpus)
 print 'Top terms saved to %s' % corpus_path
 
-swearword_frequency = get_swearword_counts(comment_corpus)
+# Get the swearword frequency
+swearword_frequency = get_swearword_counts(corpus)
 print 'Normalized swearword frequency:'
 for subreddit, frequency in swearword_frequency.items():
     print '%s, %s' % (subreddit, frequency)
 
+# Get the average word length
 print '\nAverage word length by subreddit:'
-word_lengths = get_vocabulary_sophistication(comment_corpus)
+word_lengths = get_vocabulary_sophistication(corpus)
 for subreddit, frequency in word_lengths.items():
     print '%s, %s' % (subreddit, frequency)
+
+#######################
+# MACHINE LEARNING DEMO
+#######################
+
+# Collect the comments for a particular user and determine which subreddit their comments best match up with
+counter = RedditWordCounter(USERNAME)
+corpus = TfidfCorpus(os.path.join(SAVE_DIR, CORPUS_FILE))
+
+user_comments = counter.user_comments('way_fairer')
+corpus.train_classifier(classifier_type='LinearSVC', tfidf=True)
+print corpus.classify_document(user_comments)
