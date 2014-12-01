@@ -49,6 +49,12 @@ class RedditWordCounter(object):
             user,
             multiprocess=False
     ):
+        """Initialise a RedditWordCounter object.
+
+        :param user: your Reddit username
+        :param multiprocess: if True, will handle requests from multiple RedditWordCounter objects (False by default)
+        :return:
+        """
         handler = MultiprocessHandler() if multiprocess else None
         self.user_agent = 'redditvocab/0.1 bot by {0}'.format(user)
         self.reddit = praw.Reddit(user_agent=self.user_agent, handler=handler)
@@ -186,8 +192,9 @@ class RedditWordCounter(object):
         return Counter(tokens)
 
     @staticmethod
-    def remove_punctuation(text, replacement=' ', exclude=""):
+    def remove_punctuation(text, replacement=' ', exclude="'"):
         """Remove punctuation from an input string """
+        text = text.replace("'", "")  # Single quote always stripped out
         for p in set(list(punctuation)) - set(list(exclude)):
             text = text.replace(p, replacement)
 

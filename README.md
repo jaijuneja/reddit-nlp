@@ -46,7 +46,7 @@ python setup.py install
 Upon running `pip install` or the `setup.py` script you might get a message like this:
 
 ```
-The required version of setuptools (>=7.0) is not available, and can't be installed while this script is running. Please install a more recent version first, using 'easy_install -U setuptools'.
+The required version of setuptools (>=0.7) is not available, and can't be installed while this script is running. Please install a more recent version first, using 'easy_install -U setuptools'.
 ```
 
 This is appearing because you have a very outdated version of the setuptools package. The redditnlp package typically bootstraps a newer version of setuptools during install, but it isn't working in this case. You need to update setuptools using `easy_install -U setuptools` (you may need to apply `sudo` to this command).
@@ -93,6 +93,22 @@ for subreddit in corpus.get_document_list():
     top_words = corpus.get_top_terms(document, num_terms=50)
     with open('top_words.txt', 'ab') as f:
         f.write(document + '\n' + '\n'.join(top_words.keys()))
+```
+
+## Multiprocessing
+
+`redditnlp` uses the [PRAW](https://github.com/praw-dev/praw) Reddit API wrapper. It supports multiprocessing, such that you can run multiple instances of `RedditWordCounter` without exceeding Reddit's rate limit. There is more information about this in the [PRAW documentation](https://praw.readthedocs.org/en/latest/pages/multiprocess.html) but for the sake of completeness an example is included below.
+
+First, you must initialise a request handling server on your local machine. This is done using the terminal/command line:
+
+```
+praw-multiprocess
+```
+
+Next, you can instantiate multiple `RedditWordCounter` objects and set the parameter `multiprocess=True` so that outgoing API calls are handled:
+
+```
+counter = RedditWordCounter('your_username', multiprocess=True)
 ```
 
 ## Contact
