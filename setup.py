@@ -1,17 +1,22 @@
 import ez_setup
-ez_setup.use_setuptools(version='7.0')
+ez_setup.use_setuptools()
 
 from setuptools import setup
 import os
 
 PACKAGE_NAME = 'redditnlp'
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+def read(filename):
+    filepath = os.path.join(os.path.dirname(__file__), filename)
+    try:
+        # Convert GitHub markdown to restructured text (needed for upload to PyPI)
+        from pypandoc import convert
+        return convert(filepath, 'rst')
+    except ImportError:
+        return open(filepath).read()
 
-# Fix PyPI install
 description = 'A tool to perform natural language processing of reddit content.'
 try:
     long_description = read('README.md')
