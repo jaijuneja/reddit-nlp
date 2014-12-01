@@ -95,7 +95,29 @@ for subreddit in corpus.get_document_list():
         f.write(document + '\n' + '\n'.join(top_words.keys()))
 ```
 
-## Multiprocessing
+### Machine learning
+
+`redditnlp` now supports some of scikit-learn's machine learning capability. Several in-built functions enable the user to:
+
+* Convert a TfidfCorpus object into scipy sparse feature matrices
+* Train a classifier using the documents contained in a TfidfCorpus and thereafter classify new documents
+
+Below is an example of a simple machine learning application that loads a corpus of subreddit comment data, uses it to train a classifier and determines which subreddit a user's comments match most closely:
+
+```python
+# Load the corpus of subreddit comment data and use it to train a classifier
+corpus = TfidfCorpus('path/to/subreddit_corpus.json')
+corpus.train_classifier(classifier_type='LinearSVC', tfidf=True)
+
+# Tokenize all of your comments
+counter = RedditWordCounter('your_username')
+user_comments = counter.user_comments('your_username')
+
+# Classify your comments against the documents in the corpus
+print corpus.classify_document(user_comments)
+```
+
+### Multiprocessing
 
 `redditnlp` uses the [PRAW](https://github.com/praw-dev/praw) Reddit API wrapper. It supports multiprocessing, such that you can run multiple instances of `RedditWordCounter` without exceeding Reddit's rate limit. There is more information about this in the [PRAW documentation](https://praw.readthedocs.org/en/latest/pages/multiprocess.html) but for the sake of completeness an example is included below.
 
