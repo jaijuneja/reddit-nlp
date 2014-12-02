@@ -19,11 +19,74 @@ from praw.handlers import MultiprocessHandler
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.svm import LinearSVC
-from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.multiclass import OneVsRestClassifier
 
 
-class RedditWordCounter(object):
+class WordCounter(object):
+    """Performs word counting given an input string.
+
+    Data attributes:
+        stemmer: Porter stemmer used optionally to perform stemming of extracted words
+        stopwords (list): list of stop words used to reject common words such as 'and'
+
+    Methods:
+        tokenize
+        get_word_count
+        remove_punctuation
+        remove_stopwords
+        stem_tokens: perform Porter stemming on a list of words
+    """
+
+    def __init__(self):
+        self.stemmer = PorterStemmer()
+
+        # Load stop-words
+        application_root = os.path.dirname(__file__)
+        stopwords = os.path.join(application_root, 'words/stopwords_english.txt')
+        with open(stopwords, 'rb') as stopwords_file:
+            self.stopwords = [word.strip('\n') for word in stopwords_file.readlines()]
+
+    def tokenize(self, text):
+        """Tokenize an input string into a list of words (with punctuation removed)."""
+        text = text.lower()
+        punctuation_removed = self.remove_punctuation(text)
+        tokens = nltk.word_tokenize(punctuation_removed)
+        return tokens
+
+    def get_word_count(self, text, stop_words=True, stemming=False):
+        """Return a dict (Counter) of words and corresponding counts given an input string."""
+        tokens = self.tokenize(text)
+
+        # Remove stop words
+        if stop_words:
+            tokens = self.remove_stopwords(tokens)
+
+        if stemming:
+            tokens = self.stem_tokens(tokens)
+
+        return Counter(tokens)
+
+    @staticmethod
+    def remove_punctuation(text, replacement=' ', exclude="'"):
+        """Remove punctuation from an input string."""
+        text = text.replace("'", "")  # Single quote always stripped out
+        for p in set(list(punctuation)) - set(list(exclude)):
+            text = text.replace(p, replacement)
+
+        text = ' '.join(text.split())  # Remove excess whitespace
+        return text
+
+    def remove_stopwords(self, tokens):
+        """Remove all stopwords from a list of word tokens."""
+        return [word for word in tokens if word not in self.stopwords]
+
+    def stem_tokens(self, tokens):
+        """Perform porter stemming on a list of word tokens."""
+        return [self.stemmer.stem(word) for word in tokens]
+
+
+class RedditWordCounter(WordCounter):
     """Performs word counting of comments and titles in Reddit using the Reddit API.
 
     To initialise a new RedditWordCounter instance:
@@ -35,17 +98,12 @@ class RedditWordCounter(object):
     Data Attributes:
         user_agent (str): required to connect to Reddit
         reddit: instance of the Reddit API connection
-        stemmer: Porter stemmer used optionally to perform stemming of extracted words
-        stopwords (list): list of stop words used to reject common words such as 'and'
+        word_counter: WordCounter object used to perform word counting given input strings
 
     Methods:
         subreddit_comments: word count from comments of a given subreddit
         subreddit_titles: word count from titles of a given subreddit
         user_comments: word count from comments of a given user
-        get_word_count: return tokenized word counts given an input string
-        remove_punctuation
-        remove_stopwords
-        stem_tokens: perform Porter stemming on a list of words
         check_connection: check that there is a working connection to Reddit
     """
 
@@ -60,16 +118,10 @@ class RedditWordCounter(object):
         :param multiprocess: if True, will handle requests from multiple RedditWordCounter objects (False by default)
         :return:
         """
+        super(RedditWordCounter, self).__init__()  # Initialise the WordCounter class
         handler = MultiprocessHandler() if multiprocess else None
         self.user_agent = 'redditvocab/0.1 bot by {0}'.format(user)
         self.reddit = praw.Reddit(user_agent=self.user_agent, handler=handler)
-        self.stemmer = PorterStemmer()
-
-        # Load stop-words
-        application_root = os.path.dirname(__file__)
-        stopwords = os.path.join(application_root, 'words/stopwords_english.txt')
-        with open(stopwords, 'rb') as stopwords_file:
-            self.stopwords = [word.strip('\n') for word in stopwords_file.readlines()]
 
     def subreddit_comments(self, subreddit_name, limit=1000, stemming=False, get_all_comments=False):
         """Retrieve the vocabulary from the comments of a subreddit.
@@ -182,38 +234,6 @@ class RedditWordCounter(object):
         print('\n')
         return vocabulary
 
-    def get_word_count(self, text, stop_words=True, stemming=False):
-        text = text.lower()
-        punctuation_removed = self.remove_punctuation(text)
-        tokens = nltk.word_tokenize(punctuation_removed)
-
-        # Remove stop words
-        if stop_words:
-            tokens = self.remove_stopwords(tokens)
-
-        if stemming:
-            tokens = self.stem_tokens(tokens)
-
-        return Counter(tokens)
-
-    @staticmethod
-    def remove_punctuation(text, replacement=' ', exclude="'"):
-        """Remove punctuation from an input string """
-        text = text.replace("'", "")  # Single quote always stripped out
-        for p in set(list(punctuation)) - set(list(exclude)):
-            text = text.replace(p, replacement)
-
-        text = ' '.join(text.split())  # Remove excess whitespace
-        return text
-
-    def remove_stopwords(self, tokens):
-        """Remove all stopwords from a list of word tokens."""
-        return [word for word in tokens if word not in self.stopwords]
-
-    def stem_tokens(self, tokens):
-        """Perform porter stemming on a list of word tokens."""
-        return [self.stemmer.stem(word) for word in tokens]
-
     def check_connection(self, timeout=10):
         """Wait for a server response."""
         header = {'User-Agent': self.user_agent}
@@ -279,7 +299,12 @@ class TfidfCorpus(object):
         get_tfidf
         get_document_tfidfs
         get_top_terms
-        build_feature_array
+        build_feature_matrix
+        train_classifier
+        classify_document
+        count_words_from_list
+        get_mean_word_length
+        check_corpus_path
     """
 
     def __init__(self, corpus_path='corpus.json'):

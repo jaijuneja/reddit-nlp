@@ -1,6 +1,6 @@
 # Reddit NLP Package [![Build Status](https://travis-ci.org/jaijuneja/reddit-nlp.svg?branch=master)](https://travis-ci.org/jaijuneja/reddit-nlp)
 
-A lightweight Python module that performs tokenization and processing of text on Reddit. It allows you to analyze users, titles, comments and subreddits to understand their vocabulary. The module comes packaged with its own inverted index builder for storing vocabularies and word frequencies, such that it can generate large corpora of tf-idf weighted words. This means that you don't have to worry about storing and reading word counts if you're running scripts over long periods.
+A lightweight Python module that performs tokenization and processing of text on Reddit. It allows you to analyze users, titles, comments and subreddits to understand their vocabulary. The module comes packaged with its own inverted index builder for storing vocabularies and word frequencies, such that you can generate and manipulate large corpora of tf-idf weighted words without worrying about implementation. This is especially useful if you're running scripts over long periods and wish to save intermediary results.
 
 ## License
 
@@ -57,12 +57,19 @@ If the above command doesn't do anything then it is likely that your version of 
 
 A more complex sample program using the redditnlp module can be found at `https://github.com/jaijuneja/reddit-nlp/blob/master/example.py`. Here we outline a basic word counter application.
 
-The module consists of two classes: a Reddit word counter and a tf-idf corpus builder. These can be instantiated as follows:
+The module consists of three classes: 
+ 
+* A basic word counter class, `WordCounter`, which performs tokenization and counting on input strings
+* A Reddit word counter, `RedditWordCounter`, which extends the `WordCounter` class to allow interaction with the Reddit API
+* A tf-idf corpus builder, which allows storing of large word corpora in an inverted index
+
+These three classes can be instantiated as follows:
 
 ```python
-from redditnlp import RedditWordCounter, TfidfCorpus
+from redditnlp import WordCounter, RedditWordCounter, TfidfCorpus
 
-counter = RedditWordCounter('your_username')
+word_counter = WordCounter()
+reddit_counter = RedditWordCounter('your_username')
 corpus = TfidfCorpus()
 ```
 
@@ -71,6 +78,7 @@ To adhere to the Reddit API rules, it is asked that you use your actual Reddit u
 For further information on the attributes and methods of these two classes you can run:
 
 ```python
+help(WordCounter)
 help(RedditWordCounter)
 help(TfidfCorpus)
 ```
