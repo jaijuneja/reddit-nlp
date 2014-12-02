@@ -75,7 +75,7 @@ corpus = TfidfCorpus()
 
 To adhere to the Reddit API rules, it is asked that you use your actual Reddit username in place of `'your_username'` above.
 
-For further information on the attributes and methods of these two classes you can run:
+For further information on the attributes and methods of these classes you can run:
 
 ```python
 help(WordCounter)

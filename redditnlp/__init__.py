@@ -85,6 +85,14 @@ class WordCounter(object):
         """Perform porter stemming on a list of word tokens."""
         return [self.stemmer.stem(word) for word in tokens]
 
+    def count_words_from_list(self, text, word_list, normalize=True):
+        """Count the number of times the words from a given list appear in text."""
+        text = self.tokenize(text)
+        count = sum([1 for word in text if word in word_list])
+        if normalize:
+            count /= len(text)
+        return count
+
 
 class RedditWordCounter(WordCounter):
     """Performs word counting of comments and titles in Reddit using the Reddit API.
@@ -161,12 +169,12 @@ class RedditWordCounter(WordCounter):
         comments_processed = 0
 
         for submission in subreddit.get_hot(limit=None):
-            comments = praw.helpers.flatten_tree(submission.comments)
+            submission_comments = praw.helpers.flatten_tree(submission.comments)
 
             # Run over all comments
-            submission_vocab, num_new_comments = get_vocabulary(comments)
-            vocabulary += submission_vocab
-            comments_processed += num_new_comments
+            submission_vocabulary, new_comments = get_vocabulary(submission_comments)
+            vocabulary += submission_vocabulary
+            comments_processed += new_comments
 
             print("Comments processed for subreddit '{0}': {1}".format(subreddit_name, comments_processed), end="\r")
 
@@ -391,7 +399,7 @@ class TfidfCorpus(object):
         :param document_name: string which uniquely identifies the document
         """
         if document_name in self.document_list:
-            print("Document with name '{0}' already exists in corpus." \
+            print("Document with name '{0}' already exists in corpus."
                   "Do you wish to replace it?".format(document_name))
             while True:
                 replace_doc = raw_input("Response (y/n): ")
